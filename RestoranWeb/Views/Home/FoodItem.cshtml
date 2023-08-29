@@ -1,0 +1,131 @@
+﻿@inject AppDbContext _db
+@{
+    ViewData["Title"] = "Home Page";
+    string AddMessage = TempData["message"]?.ToString();
+    var products = _db.FoodItem.Select(m => new
+    {
+        m.Id,
+        m.Name,
+        ImageUrl = m.ImageUrl,
+        m.Price,
+        m.Description,
+        CategoryName = m.Type.Name
+    }).ToList();
+    Layout = "~/Views/Shared/_ClientIndex.cshtml";
+}
+@using RestoranWeb.Data
+
+
+<div class="container-xxl py-5" id="cartApp">
+   @* <ul>
+        <li v-for="c in cartList">{{c.name}} {{c.qty}}</li>
+    </ul>*@
+    <div class="container mt-5">
+        <div class="text-center wow fadeInUp" data-wow-delay="0.1s">
+            <h5 class="section-title ff-secondary text-center text-primary fw-normal">Food Menu</h5>
+            <h1 class="mb-5">Most Popular Items</h1>
+        </div>
+        <div class="tab-class text-center wow fadeInUp" data-wow-delay="0.1s">
+            <ul class="nav nav-pills d-inline-flex justify-content-center border-bottom mb-5">
+                <li class="nav-item">
+                    <a class="d-flex align-items-center text-start mx-3 ms-0 pb-3 active" data-bs-toggle="pill" href="#tab-1">
+                        <i class="fa fa-coffee fa-2x text-primary"></i>
+                        <div class="ps-3">
+                            <small class="text-body">Popular</small>
+                            <h6 class="mt-n1 mb-0">Breakfast</h6>
+                        </div>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="d-flex align-items-center text-start mx-3 pb-3" data-bs-toggle="pill" href="#tab-2">
+                        <i class="fa fa-hamburger fa-2x text-primary"></i>
+                        <div class="ps-3">
+                            <small class="text-body">Special</small>
+                            <h6 class="mt-n1 mb-0">Launch</h6>
+                        </div>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="d-flex align-items-center text-start mx-3 me-0 pb-3" data-bs-toggle="pill" href="#tab-3">
+                        <i class="fa fa-utensils fa-2x text-primary"></i>
+                        <div class="ps-3">
+                            <small class="text-body">Lovely</small>
+                            <h6 class="mt-n1 mb-0">Dinner</h6>
+                        </div>
+                    </a>
+                </li>
+            </ul>
+            <div class="tab-content">
+                @foreach(var group in products.GroupBy(m => m.CategoryName).OrderByDescending(n => n.Count()))
+                {
+                <div id="tab-1" class="tab-pane fade show p-0 active mb-5">
+                    <h5 class="m-2">@group.Key</h5>
+                    <div class="row g-4">
+                        @foreach (var item in group)
+                        {
+                            
+                        <div class="col-lg-6">
+                            <div class="d-flex align-items-center">
+                                <img class="flex-shrink-0 img-fluid rounded" src="/@item.ImageUrl" alt="" style="width: 80px;">
+                                <div class="w-100 d-flex flex-column text-start ps-4">
+                                    <h5 class="d-flex justify-content-between border-bottom pb-2">
+                                                <span> <button  class="bg-primary notify  text-white py-1 px-2" @@click="addToCart('@item.Id')">+</button> @item.Name</span>
+                                            <span class="text-primary"> @item.Price</span>
+                                    </h5>
+                                      
+                                                                
+                                                            
+                                    <small class="fst-italic">@item.Description</small>
+                                </div>
+                            </div>
+                        </div>
+                        }
+                      
+                      
+                    </div>
+                </div>
+                    
+                }
+             
+            </div>
+        </div>
+    </div>
+</div>
+@section js{
+    <script>
+        var cartApp = Vue.createApp({
+            data() {
+                return {
+                    cartList: [],
+                    isLoggedIn: @Json.Serialize(_db.GetLoggedInUser() != null)
+                        }
+            },
+            methods: {
+                addToCart: function (id) {
+                    if (!this.isLoggedIn) {
+                        window.location.assign('/login/index');
+                    }
+                    $.post('/Cart/AddOrUpdateCart', { id: id }, function (res) {
+                        if (res.status) {
+                            cartApp.cartList = res.data;
+                        }
+                    })
+                },
+            }
+        }).mount('#cartApp');
+    </script>
+}
+{
+
+    @section javascript{
+    <script src="js/notify.js"></script>
+     <script>
+        $('.notify').click(function () {
+           
+            $.notify('@AddMessage', 'info');
+        });
+     </script>
+}
+
+
+
